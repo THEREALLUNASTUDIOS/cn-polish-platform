@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Creative Navigation — Polish Code Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root {
+      --bg: #0a0a0c;
+      --bg-elev: #14141a;
+      --bg-card: #1a1a22;
+      --ink: #e8e6e1;
+      --ink-dim: #8a8780;
+      --ink-faint: #5a5a60;
+      --accent: #d63d3d;
+      --accent-hover: #e84d4d;
+      --accent-glow: rgba(214, 61, 61, 0.35);
+      --accent-soft: rgba(214, 61, 61, 0.12);
+      --gold: #d4a84a;
+      --gold-soft: rgba(212, 168, 74, 0.12);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: 'Crimson Pro', Georgia, serif;
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+    .app-shell { max-width: 980px; margin: 0 auto; padding: 32px 20px; }
+    .top-nav {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 0 32px 0;
+      border-bottom: 1px solid var(--ink-faint);
+      margin-bottom: 32px;
+    }
+    .brand {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px; letter-spacing: 0.18em;
+      text-transform: uppercase; cursor: pointer;
+    }
+    .brand em { color: var(--accent); font-style: normal; }
+    .nav-actions { display: flex; gap: 12px; align-items: center; }
+    .user-pill {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; color: var(--ink-dim);
+      padding: 6px 12px; border: 1px solid var(--ink-faint);
+      border-radius: 100px;
+    }
+    h1 {
+      font-family: 'Crimson Pro', serif;
+      font-size: clamp(36px, 6vw, 56px);
+      font-weight: 600; line-height: 1.1; margin-bottom: 16px;
+    }
+    h1 em { color: var(--accent); font-style: italic; }
+    h2 { font-size: 28px; font-weight: 600; margin-bottom: 16px; }
+    h3 {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px; letter-spacing: 0.18em;
+      text-transform: uppercase; color: var(--ink-dim);
+      margin-bottom: 12px;
+    }
+    p { margin-bottom: 16px; }
+    p.lead { font-size: 18px; }
+    p.dim { color: var(--ink-dim); }
+    .eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; letter-spacing: 0.2em;
+      text-transform: uppercase; color: var(--accent);
+      margin-bottom: 16px;
+    }
+    .btn {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px; font-weight: 500;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      padding: 14px 28px; background: transparent;
+      border: 1.5px solid var(--ink); color: var(--ink);
+      cursor: pointer; transition: all 0.15s ease;
+      border-radius: 2px;
+    }
+    .btn:hover { background: rgba(255,255,255,0.04); }
+    .btn.primary {
+      background: linear-gradient(135deg, var(--accent), #a82f2f);
+      border-color: var(--accent); color: white;
+      box-shadow: 0 0 20px var(--accent-glow);
+    }
+    .btn.primary:hover { background: var(--accent-hover); }
+    .btn.ghost { border-color: var(--ink-faint); color: var(--ink-dim); }
+    .btn.ghost:hover { color: var(--ink); border-color: var(--ink); }
+    .btn.small { padding: 8px 16px; font-size: 11px; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .card {
+      background: var(--bg-card); border: 1px solid var(--ink-faint);
+      border-radius: 4px; padding: 24px;
+    }
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px; margin-bottom: 40px;
+    }
+    .stat-card {
+      background: var(--bg-card); border: 1px solid var(--ink-faint);
+      border-radius: 4px; padding: 24px;
+      position: relative; overflow: hidden;
+      transition: all 0.3s ease;
+    }
+    .stat-card::before {
+      content: ''; position: absolute;
+      top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      opacity: 0; transition: opacity 0.3s ease;
+    }
+    .stat-card:hover {
+      border-color: var(--accent);
+      box-shadow: 0 4px 24px rgba(214, 61, 61, 0.15);
+    }
+    .stat-card:hover::before { opacity: 1; }
+    .stat-card .label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; letter-spacing: 0.2em;
+      text-transform: uppercase; color: var(--ink-dim);
+      margin-bottom: 12px;
+    }
+    .stat-card .value {
+      font-family: 'Crimson Pro', serif;
+      font-size: 48px; font-weight: 700;
+      color: var(--accent); line-height: 1;
+      margin-bottom: 4px;
+      text-shadow: 0 0 20px var(--accent-glow);
+      animation: pulse-glow 3s ease-in-out infinite;
+    }
+    .stat-card .sublabel {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; color: var(--ink-dim);
+    }
+    @keyframes pulse-glow {
+      0%, 100% { text-shadow: 0 0 20px var(--accent-glow); }
+      50% { text-shadow: 0 0 30px rgba(214, 61, 61, 0.55); }
+    }
+    .form-row { margin-bottom: 16px; }
+    label {
+      display: block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; letter-spacing: 0.15em;
+      text-transform: uppercase; color: var(--ink-dim);
+      margin-bottom: 6px;
+    }
+    input[type="text"], input[type="email"], input[type="password"] {
+      width: 100%; padding: 12px 14px;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid var(--ink-faint);
+      border-radius: 2px; color: var(--ink);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+    }
+    input:focus {
+      outline: none; border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent-soft);
+    }
+    .genre-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px; margin-top: 24px;
+    }
+    .genre-card {
+      padding: 20px; background: var(--bg-card);
+      border: 1.5px solid var(--ink-faint);
+      border-radius: 4px; cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .genre-card:hover, .genre-card.selected {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+    .genre-card .name {
+      font-family: 'Crimson Pro', serif;
+      font-size: 22px; font-weight: 600; margin-bottom: 4px;
+    }
+    .genre-card .sub {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; letter-spacing: 0.1em;
+      color: var(--ink-dim); text-transform: uppercase;
+    }
+    .quiz-q {
+      font-family: 'Crimson Pro', serif;
+      font-size: 28px; font-weight: 600; margin-bottom: 24px;
+    }
+    .quiz-answers { display: grid; gap: 12px; }
+    .quiz-answer {
+      padding: 16px 20px; background: var(--bg-card);
+      border: 1.5px solid var(--ink-faint);
+      border-radius: 4px; cursor: pointer;
+      transition: all 0.15s ease; text-align: left;
+      width: 100%;
+      font-family: inherit;
+      color: inherit;
+    }
+    .quiz-answer:hover {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+    .quiz-answer .text {
+      font-family: 'Crimson Pro', serif;
+      font-size: 18px; font-weight: 600; margin-bottom: 4px;
+    }
+    .quiz-answer .sub {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; color: var(--ink-dim);
+    }
+    .code-block {
+      background: rgba(0,0,0,0.4);
+      border: 1px solid var(--ink-faint);
+      border-radius: 4px; padding: 20px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px; line-height: 1.7;
+      white-space: pre-wrap; overflow-x: auto;
+      max-height: 500px; overflow-y: auto;
+    }
+    .instructions {
+      background: var(--gold-soft);
+      border-left: 3px solid var(--gold);
+      padding: 20px 24px; margin: 24px 0;
+      border-radius: 0 4px 4px 0;
+    }
+    .instructions h4 {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; letter-spacing: 0.18em;
+      text-transform: uppercase; color: var(--gold);
+      margin-bottom: 12px;
+    }
+    .instructions ol { padding-left: 20px; margin-bottom: 0; }
+    .instructions li { margin-bottom: 8px; }
+    .action-row {
+      display: flex; gap: 12px; flex-wrap: wrap; margin: 24px 0;
+    }
+    .auth-card {
+      max-width: 420px; margin: 60px auto; padding: 40px;
+      background: var(--bg-card);
+      border: 1px solid var(--ink-faint);
+      border-radius: 4px;
+    }
+    .auth-toggle {
+      text-align: center; margin-top: 20px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px; color: var(--ink-dim);
+    }
+    .auth-toggle a {
+      color: var(--accent); cursor: pointer; text-decoration: underline;
+    }
+    .error, .success {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px; padding: 10px 12px;
+      margin: 12px 0; border-left: 2px solid;
+    }
+    .error { color: var(--accent); background: var(--accent-soft); border-color: var(--accent); }
+    .success { color: var(--gold); background: var(--gold-soft); border-color: var(--gold); }
+    .codes-list { display: grid; gap: 12px; }
+    .code-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 20px; background: var(--bg-card);
+      border: 1px solid var(--ink-faint);
+      border-radius: 4px; cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .code-item:hover {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+    .code-item .name {
+      font-family: 'Crimson Pro', serif;
+      font-size: 18px; font-weight: 600;
+    }
+    .code-item .meta {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; color: var(--ink-dim);
+    }
+    .code-item .badge {
+      display: inline-block; padding: 2px 8px;
+      background: var(--accent-soft); color: var(--accent);
+      border-radius: 100px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px; letter-spacing: 0.1em;
+      text-transform: uppercase; margin-left: 8px;
+    }
+    .toast {
+      position: fixed; bottom: 30px; left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--accent); color: white;
+      padding: 12px 24px; border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px; letter-spacing: 0.1em;
+      text-transform: uppercase;
+      opacity: 0; transition: all 0.3s ease;
+      z-index: 1000;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    .empty-state {
+      text-align: center; padding: 60px 20px; color: var(--ink-dim);
+    }
+    .empty-state .icon {
+      font-size: 48px; margin-bottom: 16px; opacity: 0.4;
+    }
+    .spacer { height: 24px; }
+    .spacer-lg { height: 40px; }
+    .center { text-align: center; }
+    .hidden { display: none !important; }
+    @media (max-width: 600px) {
+      h1 { font-size: 32px; }
+      .top-nav { flex-direction: column; gap: 12px; align-items: flex-start; }
+      .auth-card { padding: 24px; margin: 30px auto; }
+    }
+  </style>
+
+</head>
+<body>
+  <div class="app-shell">
+    <div class="top-nav">
+      <div class="brand" onclick="goHome()">CREATIVE <em>NAVIGATION</em></div>
+      <div class="nav-actions">
+        <button class="btn ghost small" onclick="showView('learn')">Learn</button>
+        <span id="user-pill" class="user-pill hidden"></span>
+        <button id="signin-btn" class="btn ghost small" onclick="showView('auth')">Sign In</button>
+        <button id="signout-btn" class="btn ghost small hidden" onclick="handleSignOut()">Sign Out</button>
+      </div>
+    </div>
+
+```
+<div id="main-content"></div>
+```
+
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    // ============================================================
+    // SUPABASE CONNECTION
+    // ============================================================
+    const SUPABASE_URL = 'https://lqemqzhkgwsdxrqcprpq.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxxZW1xemhrZ3dzZHhycWNwcnBxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3NjU4MjYsImV4cCI6MjA5MzM0MTgyNn0.mby1OoIJZd9ethB_tW6KneHHihhljsjdo-7cKQ3jCis';
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // ============================================================
+    // STATE
+    // ============================================================
+    let currentUser = null;
+    let currentView = 'landing';
+    let quizState = { genre: null, qIndex: 0, adjustments: {} };
+    let viewingCode = null;
+
+    // ============================================================
+    // GENRES & QUIZ DATA
+    // ============================================================
+    const GENRES = [
+      { id: 'dark_fantasy', name: 'Dark Fantasy', sub: 'Urban · Mythic · Cinematic', profile: { sentence: 11, imagery: 8, emotion: 30, dialogue: 35, metaphor: 400, traits: 'Sharp dialogue · Cinematic cuts · Subtext-heavy emotion · Mythic imagery' } },
+      { id: 'cozy_mystery', name: 'Cozy Mystery', sub: 'Warm · Sensory · Communal', profile: { sentence: 15, imagery: 6, emotion: 15, dialogue: 45, metaphor: 800, traits: 'Warm conversational dialogue · Comfort sensory · Unhurried pacing · Domestic detail' } },
+      { id: 'epic_fantasy', name: 'Epic Fantasy', sub: 'Grand · Worldbuilt · Sweeping', profile: { sentence: 18, imagery: 10, emotion: 25, dialogue: 30, metaphor: 350, traits: 'Rich worldbuilding · Formal speech varied by culture · Long immersive chapters · Prophecy cadence' } },
+      { id: 'military_scifi', name: 'Military Sci-Fi', sub: 'Tactical · Tense · Precise', profile: { sentence: 10, imagery: 6, emotion: 20, dialogue: 40, metaphor: 700, traits: 'Clipped professional dialogue · Technical precision · Chain of command · Camaraderie under fire' } },
+      { id: 'romance', name: 'Contemporary Romance', sub: 'Tactile · Charged · Yearning', profile: { sentence: 13, imagery: 7, emotion: 40, dialogue: 50, metaphor: 500, traits: 'Witty charged banter · Heavy tactile sensory · Internal yearning · Vulnerability beats' } },
+      { id: 'psych_thriller', name: 'Psychological Thriller', sub: 'Subtextual · Paranoid · Sharp', profile: { sentence: 9, imagery: 5, emotion: 35, dialogue: 40, metaphor: 600, traits: 'Loaded subtext · Unreliable narrator cues · Time distortion in stress · Environmental threats' } },
+      { id: 'literary', name: 'Literary Fiction', sub: 'Lyrical · Dense · Atmospheric', profile: { sentence: 19, imagery: 12, emotion: 25, dialogue: 28, metaphor: 250, traits: 'Lyrical prose · Metaphor-dense · Structural complexity · Interior monologue' } },
+      { id: 'horror', name: 'Horror', sub: 'Atmospheric · Visceral · Dread', profile: { sentence: 12, imagery: 9, emotion: 35, dialogue: 30, metaphor: 450, traits: 'Creeping dread · Visceral sensory · Paranoia in mundane moments · Isolation amplified' } }
+    ];
+
+    const QUIZ = [
+      { q: 'When you read a book you love, the prose feels…',
+        answers: [
+          { text: 'Fast and punchy', sub: 'I want to turn pages quickly', adj: { sentence: -2 } },
+          { text: 'Measured and deliberate', sub: 'I want to savor each scene', adj: { sentence: 3 } },
+          { text: 'Variable', sub: 'Fast action, slow emotion', adj: { sentence: 0 } },
+          { text: 'Lyrical', sub: 'Language is the pleasure itself', adj: { sentence: 4, metaphor: -100 } }
+        ] },
+      { q: 'Your ideal sentence style is…',
+        answers: [
+          { text: 'Short and sharp', sub: 'Hemingway energy', adj: { sentence: -3 } },
+          { text: 'Long and flowing', sub: 'Literary rhythm', adj: { sentence: 4 } },
+          { text: 'Mixed for effect', sub: 'Short when tense, long when reflective', adj: { sentence: 0 } },
+          { text: 'Fragmented', sub: 'Beats. Not sentences. Impact.', adj: { sentence: -4 } }
+        ] },
+      { q: 'How much description do you want?',
+        answers: [
+          { text: 'Sparse', sub: 'Just enough to ground the reader', adj: { imagery: -3 } },
+          { text: 'Moderate', sub: "Paint the scene, don't overwhelm", adj: { imagery: 0 } },
+          { text: 'Rich', sub: 'Sensory immersion matters', adj: { imagery: 3 } },
+          { text: 'Cinematic', sub: 'Every scene should feel filmed', adj: { imagery: 4 } }
+        ] },
+      { q: 'Emotional intensity in your writing is…',
+        answers: [
+          { text: 'Restrained', sub: 'Trust the reader to feel it', adj: { emotion: -10 } },
+          { text: 'Balanced', sub: 'Show emotion when it matters', adj: { emotion: 0 } },
+          { text: 'Heightened', sub: 'Make them feel everything', adj: { emotion: 10 } },
+          { text: 'Operatic', sub: 'Every scene should land emotionally', adj: { emotion: 15 } }
+        ] },
+      { q: 'How much dialogue do you write?',
+        answers: [
+          { text: 'Minimal', sub: 'Action and description first', adj: { dialogue: -10 } },
+          { text: 'Balanced', sub: 'Conversation drives plot', adj: { dialogue: 0 } },
+          { text: 'Heavy', sub: 'Characters reveal through speech', adj: { dialogue: 10 } },
+          { text: 'Constant', sub: 'Banter is everything', adj: { dialogue: 15 } }
+        ] }
+    ];
+
+    // ============================================================
+    // CODE GENERATION
+    // ============================================================
+    function generatePolishCode(genre, sliders, userName) {
+      const g = GENRES.find(x => x.id === genre);
+      const date = new Date().toISOString().split('T')[0];
+      const traits = g.profile.traits.split(' · ').map(t => `  - ${t}`).join('\n');
+      return `# ═══════════════════════════════════════════════
+# CREATIVE NAVIGATION POLISH CODE
+# Custom configuration for: ${userName || 'Writer'}
+# Generated: ${date}
+# ═══════════════════════════════════════════════
+
+genre_base: ${g.id}
+
+# ═══ RHYTHM ═══
+rhythm:
+  avg_sentence_length: ${sliders.sentence}
+  variation: 0.70
+  paragraph_target: ${sliders.sentence < 10 ? 3 : sliders.sentence > 15 ? 5 : 4}
+
+# ═══ IMAGERY ═══
+imagery:
+  density: ${(sliders.imagery / 100).toFixed(2)}
+  metaphor_frequency: ${sliders.metaphor}
+
+# ═══ EMOTION ═══
+emotion:
+  amplification: ${(sliders.emotion / 100).toFixed(2)}
+
+# ═══ DIALOGUE ═══
+dialogue:
+  prose_ratio: ${(sliders.dialogue / 100).toFixed(2)}
+  tag_frequency: 3
+  action_beats: high
+
+# ═══ SIGNATURE TRAITS ═══
+signature:
+${traits}
+
+# ═══ FORBIDDEN ═══
+forbidden:
+  - "suddenly" (show the sudden thing)
+  - "very" or "really" as intensifiers
+  - adverbs attached to dialogue tags
+  - passive voice in action sequences
+  - telling emotions that should be shown`;
+    }
+
+    function generateClaudePrompt(codeYaml) {
+      return `I'm using my Creative Navigation polish code to refine a draft. Here's my code:
+
+\`\`\`yaml
+${codeYaml}
+\`\`\`
+
+I'll paste my draft next. Please rewrite it to match every parameter above. Keep my plot, characters, and dialogue meaning — only change the prose to fit the code. Return only the polished prose, no commentary.`;
+    }
+
+    // ============================================================
+    // AUTH
+    // ============================================================
+    async function checkUser() {
+      const { data } = await sb.auth.getUser();
+      currentUser = data?.user || null;
+      updateNav();
+      if (currentUser && currentView === 'landing') {
+        showView('dashboard');
+      }
+    }
+
+    function updateNav() {
+      const userPill = document.getElementById('user-pill');
+      const signinBtn = document.getElementById('signin-btn');
+      const signoutBtn = document.getElementById('signout-btn');
+      if (currentUser) {
+        userPill.textContent = currentUser.email;
+        userPill.classList.remove('hidden');
+        signinBtn.classList.add('hidden');
+        signoutBtn.classList.remove('hidden');
+      } else {
+        userPill.classList.add('hidden');
+        signinBtn.classList.remove('hidden');
+        signoutBtn.classList.add('hidden');
+      }
+    }
+
+    async function handleSignOut() {
+      await sb.auth.signOut();
+      currentUser = null;
+      updateNav();
+      showView('landing');
+    }
+
+    // ============================================================
+    // DATABASE
+    // ============================================================
+    async function saveCode(codeData) {
+      const { data, error } = await sb.from('polish_codes').insert(codeData).select().single();
+      return { data, error };
+    }
+
+    async function getUserCodes(userId) {
+      const { data, error } = await sb.from('polish_codes')
+        .select('*').eq('user_id', userId)
+        .order('created_at', { ascending: false });
+      return { data: data || [], error };
+    }
+
+    async function deleteCodeById(codeId) {
+      const { error } = await sb.from('polish_codes').delete().eq('id', codeId);
+      return { error };
+    }
+
+    async function getStats(userId) {
+      const { data } = await sb.from('polish_codes')
+        .select('genre, is_refinement, created_at').eq('user_id', userId);
+      if (!data) return { totalCodes: 0, refinements: 0, daysActive: 0, favoriteGenre: '—' };
+      const totalCodes = data.length;
+      const refinements = data.filter(c => c.is_refinement).length;
+      const uniqueDays = new Set(data.map(c => c.created_at.split('T')[0]));
+      const daysActive = uniqueDays.size;
+      const genreCount = {};
+      data.forEach(c => { genreCount[c.genre] = (genreCount[c.genre] || 0) + 1; });
+      const favoriteGenre = Object.keys(genreCount).reduce((a, b) =>
+        genreCount[a] > genreCount[b] ? a : b, '—');
+      return { totalCodes, refinements, daysActive, favoriteGenre };
+    }
+
+    // ============================================================
+    // UTILITIES
+    // ============================================================
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2200);
+    }
+
+    function copyToClipboard(text, message) {
+      navigator.clipboard.writeText(text).then(() => showToast(message));
+    }
+
+    function downloadFile(filename, content) {
+      const blob = new Blob([content], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename; a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function escapeHtml(s) {
+      return s.replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      })[c]);
+    }
+
+    function genreName(id) {
+      return GENRES.find(g => g.id === id)?.name || id;
+    }
+
+    function formatDate(iso) {
+      return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    // ============================================================
+    // VIEWS / ROUTING
+    // ============================================================
+    function goHome() {
+      showView(currentUser ? 'dashboard' : 'landing');
+    }
+
+    function showView(view) {
+      currentView = view;
+      const main = document.getElementById('main-content');
+      if (view === 'landing') main.innerHTML = renderLanding();
+      else if (view === 'auth') main.innerHTML = renderAuth();
+      else if (view === 'quiz_genre') main.innerHTML = renderQuizGenre();
+      else if (view === 'quiz_questions') main.innerHTML = renderQuizQuestion();
+      else if (view === 'result') main.innerHTML = renderResult();
+      else if (view === 'dashboard') renderDashboard();
+      else if (view === 'learn') main.innerHTML = renderLearn();
+    }
+
+    function renderLanding() {
+      return `
+        <div class="eyebrow">Creative Navigation</div>
+        <h1>Your prose, in <em>your voice.</em><br />Not the AI's default.</h1>
+        <p class="lead">Take the quiz. Get a polish code tuned to your style. Use it in Claude or ChatGPT — and watch generic AI writing transform into prose that sounds like you.</p>
+        <div class="spacer"></div>
+        <div class="action-row">
+          <button class="btn primary" onclick="startQuiz()">Get Started → Free</button>
+          <button class="btn ghost" onclick="showView('auth')">I have an account</button>
+        </div>
+        <div class="spacer-lg"></div>
+        <div class="card">
+          <h3>How It Works</h3>
+          <p>1. Take a 5-question quiz about how you write.</p>
+          <p>2. Get a personalized polish code (a YAML config).</p>
+          <p>3. Save it to your account. Build a library of voice configs over time.</p>
+          <p>4. Use it in Claude or ChatGPT to polish your drafts.</p>
+          <p style="margin-bottom: 0;">5. Same draft + different code = completely different voice.</p>
+        </div>
+      `;
+    }
+
+    function renderAuth() {
+      return `
+        <div class="auth-card">
+          <div class="eyebrow center" id="auth-eyebrow">Create Account</div>
+          <h2 class="center" id="auth-title">Save Your Codes.</h2>
+          <p class="dim center" id="auth-subtitle">One account stores every polish code you generate.</p>
+          <div class="spacer"></div>
+          <div class="form-row">
+            <label>Email</label>
+            <input type="email" id="auth-email" placeholder="you@example.com" />
+          </div>
+          <div class="form-row">
+            <label>Password</label>
+            <input type="password" id="auth-password" placeholder="At least 6 characters" />
+          </div>
+          <div id="auth-error"></div>
+          <button class="btn primary" style="width: 100%;" onclick="handleAuth()" id="auth-submit">Create Account →</button>
+          <div class="auth-toggle" id="auth-toggle">
+            Already have an account? <a onclick="toggleAuthMode()">Sign in</a>
+          </div>
+        </div>
+      `;
+    }
+
+    let authMode = 'signup';
+    function toggleAuthMode() {
+      authMode = authMode === 'signup' ? 'signin' : 'signup';
+      document.getElementById('auth-eyebrow').textContent = authMode === 'signup' ? 'Create Account' : 'Sign In';
+      document.getElementById('auth-title').textContent = authMode === 'signup' ? 'Save Your Codes.' : 'Welcome Back.';
+      document.getElementById('auth-subtitle').textContent = authMode === 'signup' ? 'One account stores every polish code you generate.' : 'Pick up where you left off.';
+      document.getElementById('auth-submit').textContent = authMode === 'signup' ? 'Create Account →' : 'Sign In →';
+      document.getElementById('auth-toggle').innerHTML = authMode === 'signup'
+        ? 'Already have an account? <a onclick="toggleAuthMode()">Sign in</a>'
+        : 'New here? <a onclick="toggleAuthMode()">Create account</a>';
+    }
+
+    async function handleAuth() {
+      const email = document.getElementById('auth-email').value.trim();
+      const password = document.getElementById('auth-password').value;
+      const errDiv = document.getElementById('auth-error');
+      errDiv.innerHTML = '';
+      if (!email || !password) {
+        errDiv.innerHTML = '<div class="error">Email and password required</div>';
+        return;
+      }
+      if (password.length < 6) {
+        errDiv.innerHTML = '<div class="error">Password must be at least 6 characters</div>';
+        return;
+      }
+      const fn = authMode === 'signup'
+        ? sb.auth.signUp({ email, password })
+        : sb.auth.signInWithPassword({ email, password });
+      const { data, error } = await fn;
+      if (error) {
+        errDiv.innerHTML = `<div class="error">${escapeHtml(error.message)}</div>`;
+        return;
+      }
+      if (authMode === 'signup' && !data.user) {
+        errDiv.innerHTML = '<div class="success">Check your email to confirm your account, then sign in.</div>';
+        return;
+      }
+      if (data.user) {
+        currentUser = data.user;
+        updateNav();
+        showView('dashboard');
+      }
+    }
+
+    function startQuiz() {
+      if (!currentUser) { showView('auth'); return; }
+      quizState = { genre: null, qIndex: 0, adjustments: {} };
+      showView('quiz_genre');
+    }
+
+    function renderQuizGenre() {
+      return `
+        <div class="eyebrow">Step 1 · Pick Your Genre</div>
+        <h1>Where does your <em>voice</em> live?</h1>
+        <p class="lead">Genre sets the foundation. We'll fine-tune from there.</p>
+        <div class="genre-grid">
+          ${GENRES.map(g => `
+            <div class="genre-card" onclick="selectGenre('${g.id}')">
+              <div class="name">${g.name}</div>
+              <div class="sub">${g.sub}</div>
+            </div>
+          `).join('')}
+        </div>
+        <div class="spacer"></div>
+        <button class="btn ghost" onclick="goHome()">← Cancel</button>
+      `;
+    }
+
+    function selectGenre(id) {
+      quizState.genre = id;
+      quizState.qIndex = 0;
+      quizState.adjustments = {};
+      showView('quiz_questions');
+    }
+
+    function renderQuizQuestion() {
+      const q = QUIZ[quizState.qIndex];
+      return `
+        <div class="eyebrow">Step 2 · Question ${quizState.qIndex + 1} of ${QUIZ.length}</div>
+        <div class="quiz-q">${q.q}</div>
+        <div class="quiz-answers">
+          ${q.answers.map((a, i) => `
+            <button class="quiz-answer" onclick='answerQuestion(${JSON.stringify(a.adj)})'>
+              <div class="text">${a.text}</div>
+              <div class="sub">${a.sub}</div>
+            </button>
+          `).join('')}
+        </div>
+        <div class="spacer"></div>
+        <button class="btn ghost" onclick="quizBack()">← Back</button>
+      `;
+    }
+
+    function quizBack() {
+      if (quizState.qIndex > 0) { quizState.qIndex--; showView('quiz_questions'); }
+      else { showView('quiz_genre'); }
+    }
+
+    function answerQuestion(adj) {
+      Object.keys(adj).forEach(key => {
+        quizState.adjustments[key] = (quizState.adjustments[key] || 0) + adj[key];
+      });
+      if (quizState.qIndex < QUIZ.length - 1) {
+        quizState.qIndex++;
+        showView('quiz_questions');
+      } else {
+        const g = GENRES.find(x => x.id === quizState.genre);
+        const finalSliders = { ...g.profile };
+        Object.keys(quizState.adjustments).forEach(key => {
+          finalSliders[key] = (finalSliders[key] || 0) + quizState.adjustments[key];
+        });
+        finalSliders.sentence = Math.max(5, Math.min(25, finalSliders.sentence));
+        finalSliders.imagery = Math.max(2, Math.min(15, finalSliders.imagery));
+        finalSliders.emotion = Math.max(0, Math.min(60, finalSliders.emotion));
+        finalSliders.dialogue = Math.max(10, Math.min(70, finalSliders.dialogue));
+        finalSliders.metaphor = Math.max(150, Math.min(1000, finalSliders.metaphor));
+        quizState.finalSliders = finalSliders;
+        showView('result');
+      }
+    }
+
+    function renderResult() {
+      const isRefinement = !!viewingCode;
+      const g = quizState.genre;
+      const sliders = quizState.finalSliders;
+      const userName = currentUser?.email?.split('@')[0] || 'Writer';
+      const codeYaml = generatePolishCode(g, sliders, userName);
+      const claudePrompt = generateClaudePrompt(codeYaml);
+      window._currentCodeYaml = codeYaml;
+      window._currentClaudePrompt = claudePrompt;
+      window._currentResultData = { g, sliders };
+
+      return `
+        <div class="eyebrow">${isRefinement ? 'Refined Code' : 'Your Polish Code'}</div>
+        <h1>Meet <em>your voice.</em></h1>
+        <p class="lead">Built from your answers. Yours to use anywhere AI writes prose.</p>
+        <div class="spacer"></div>
+
+        <div class="card" style="border-color: var(--accent); background: var(--accent-soft);">
+          <h3 style="color: var(--accent); margin-bottom: 16px;">Save This Code</h3>
+          <div class="form-row">
+            <label>Name (optional)</label>
+            <input type="text" id="code-name" placeholder="${genreName(g)} - ${new Date().toLocaleDateString()}" />
+          </div>
+          <button class="btn primary" onclick="handleSave(${isRefinement})">💾 Save to My Dashboard</button>
+        </div>
+
+        <div class="spacer"></div>
+        <h3>Your YAML Code</h3>
+        <div class="code-block">${escapeHtml(codeYaml)}</div>
+
+        <div class="action-row">
+          <button class="btn primary" onclick="copyToClipboard(window._currentClaudePrompt, 'Claude-ready prompt copied')">📋 Copy + Instructions for Claude</button>
+          <button class="btn" onclick="copyToClipboard(window._currentCodeYaml, 'YAML code copied')">Copy Code Only</button>
+        </div>
+
+        <div class="spacer"></div>
+        <h3>Downloads</h3>
+        <div class="action-row">
+          <button class="btn ghost" onclick="downloadFile('polish_code.yml', window._currentCodeYaml)">⬇ Download YAML</button>
+          <button class="btn ghost" onclick="downloadFile('polish_code_instructions.txt', window._currentClaudePrompt)">⬇ Download Instructions</button>
+        </div>
+
+        <div class="instructions">
+          <h4>How To Use Your Code (3 Simple Steps)</h4>
+          <ol>
+            <li><strong>Click "Copy + Instructions for Claude"</strong> above. This copies everything you need.</li>
+            <li><strong>Open Claude</strong> (claude.ai) or ChatGPT. Paste what you copied as a new message.</li>
+            <li><strong>Paste your draft</strong> in the next message. The AI will polish it using YOUR voice config.</li>
+          </ol>
+          <p style="margin-top: 12px; font-size: 14px; color: var(--ink-dim);">
+            Want a deeper explanation? <a style="color: var(--accent); cursor: pointer;" onclick="showView('learn')">Read the full CN guide →</a>
+          </p>
+        </div>
+
+        <div class="action-row">
+          <button class="btn ghost" onclick="goHome()">← Back to Dashboard</button>
+        </div>
+      `;
+    }
+
+    async function handleSave(isRefinement) {
+      const name = document.getElementById('code-name').value.trim();
+      const { g, sliders } = window._currentResultData;
+      const codeYaml = window._currentCodeYaml;
+      const { error } = await saveCode({
+        user_id: currentUser.id,
+        name: name || `${genreName(g)} - ${new Date().toLocaleDateString()}`,
+        genre: g,
+        sliders,
+        code_yaml: codeYaml,
+        is_refinement: isRefinement,
+        parent_id: viewingCode?.id || null
+      });
+      if (error) { showToast('Save failed: ' + error.message); }
+      else { showToast('Saved to your dashboard'); setTimeout(() => { viewingCode = null; showView('dashboard'); }, 1200); }
+    }
+
+    async function renderDashboard() {
+      const main = document.getElementById('main-content');
+      main.innerHTML = `<div class="eyebrow">Your Studio</div>
+        <h1>Welcome back, <em>${currentUser.email.split('@')[0]}.</em></h1>
+        <p class="lead">Loading your library…</p>`;
+      const [stats, codesResult] = await Promise.all([
+        getStats(currentUser.id),
+        getUserCodes(currentUser.id)
+      ]);
+      const codes = codesResult.data;
+      main.innerHTML = `
+        <div class="eyebrow">Your Studio</div>
+        <h1>Welcome back, <em>${currentUser.email.split('@')[0]}.</em></h1>
+        <p class="lead">Every code you've built. Every refinement. All in one place.</p>
+        <div class="spacer-lg"></div>
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="label">Codes Generated</div>
+            <div class="value">${stats.totalCodes}</div>
+            <div class="sublabel">total in your library</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Refinements</div>
+            <div class="value">${stats.refinements}</div>
+            <div class="sublabel">tuned and re-tuned</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Days Active</div>
+            <div class="value">${stats.daysActive}</div>
+            <div class="sublabel">building your voice</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Top Genre</div>
+            <div class="value" style="font-size: 24px; line-height: 1.2;">${stats.favoriteGenre === '—' ? '—' : genreName(stats.favoriteGenre)}</div>
+            <div class="sublabel">your home base</div>
+          </div>
+        </div>
+        <div class="action-row">
+          <button class="btn primary" onclick="startQuiz()">+ Generate New Code</button>
+        </div>
+        <div class="spacer"></div>
+        <h3>Your Saved Codes</h3>
+        ${codes.length === 0 ? `
+          <div class="empty-state">
+            <div class="icon">📜</div>
+            <p>No codes yet. Generate your first one to get started.</p>
+          </div>
+        ` : `
+          <div class="codes-list">
+            ${codes.map(c => `
+              <div class="code-item" onclick='viewSavedCode(${JSON.stringify(c).replace(/'/g, "&apos;")})'>
+                <div>
+                  <div class="name">${escapeHtml(c.name)}${c.is_refinement ? '<span class="badge">Refined</span>' : ''}</div>
+                  <div class="meta">${genreName(c.genre)} · ${formatDate(c.created_at)}</div>
+                </div>
+                <button class="btn ghost small" onclick='deleteThisCode(event, "${c.id}")'>Delete</button>
+              </div>
+            `).join('')}
+          </div>
+        `}
+      `;
+    }
+
+    function viewSavedCode(c) {
+      viewingCode = c;
+      quizState = { genre: c.genre, finalSliders: c.sliders, qIndex: 0, adjustments: {} };
+      showView('result');
+    }
+
+    async function deleteThisCode(e, id) {
+      e.stopPropagation();
+      if (!confirm('Delete this code? This cannot be undone.')) return;
+      const { error } = await deleteCodeById(id);
+      if (error) showToast('Delete failed');
+      else { showToast('Code deleted'); renderDashboard(); }
+    }
+
+    function renderLearn() {
+      return `
+        <div class="eyebrow">Education Hub</div>
+        <h1>How <em>Creative Navigation</em> Works.</h1>
+        <p class="lead">Your polish code is more than a config file. It's a deterministic system that turns AI from a generic writing tool into your personal voice engine.</p>
+        <div class="spacer"></div>
+        <h2>What is a polish code?</h2>
+        <p>A polish code is a YAML file containing precise parameters that control how AI rewrites your prose. Sentence rhythm. Imagery density. Emotional amplification. Dialogue ratio. Every measurable element of voice — locked into a transferable file.</p>
+        <p>When you paste it into Claude or ChatGPT alongside your draft, the AI doesn't guess what "good" prose looks like. It follows YOUR specifications. Same draft, different code = completely different voice.</p>
+        <div class="spacer"></div>
+        <h2>Where to use it</h2>
+        <p>The code works in any AI that handles long-form prose. The two best:</p>
+        <p><strong>Claude</strong> (claude.ai) — recommended. Better at following structural instructions and preserving voice across long passages.</p>
+        <p><strong>ChatGPT</strong> (chat.openai.com) — works well, especially GPT-4 or above.</p>
+        <div class="spacer"></div>
+        <h2>Step-by-step usage</h2>
+        <div class="instructions">
+          <h4>The 3-Minute Workflow</h4>
+          <ol>
+            <li><strong>Generate your code</strong> — take the quiz, get your YAML.</li>
+            <li><strong>Click "Copy + Instructions for Claude"</strong> — pre-formatted prompt with your code embedded.</li>
+            <li><strong>Open Claude or ChatGPT</strong> in a new chat.</li>
+            <li><strong>Paste the prompt</strong> as your first message.</li>
+            <li><strong>Paste your draft</strong> as the next message.</li>
+            <li><strong>Get polished prose back</strong> in your voice.</li>
+          </ol>
+        </div>
+        <div class="spacer"></div>
+        <h2>Why CN is different</h2>
+        <p>Other AI writing tools generate content from scratch — that's why publishers reject AI work. CN does the opposite. <strong>You</strong> bring the story, the characters, the emotional truth. The AI just executes your stylistic specifications.</p>
+        <p>Result: 100% human creativity. Professional-quality prose. Same byline. Same voice. Just amplified.</p>
+        <div class="spacer"></div>
+        <button class="btn ghost" onclick="goHome()">← Back</button>
+      `;
+    }
+
+    // ============================================================
+    // INIT
+    // ============================================================
+    sb.auth.onAuthStateChange((_event, session) => {
+      currentUser = session?.user || null;
+      updateNav();
+    });
+
+    checkUser().then(() => {
+      if (!currentUser) showView('landing');
+    });
+  </script>
+
+</body>
+</html>
